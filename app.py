@@ -1,5 +1,5 @@
-from flask import Flask, jsonify,request,Response
-import test
+from flask import Flask, jsonify,request, Response
+import json
 
 app = Flask(__name__)
 
@@ -17,15 +17,38 @@ books= [ {
 ]
 #GET /books/9781612680019
 #GET /books
+
 @app.route('/books')
 def get_books():
     return jsonify({'books': books})
 
- 
-
+def validBookObject(bookObject):
+    if ("name" in bookObject and "price" in bookObject and "isbn" in bookObject):
+        return True
+    else:
+        return False    
+    
+#books/isbn_number
 @app.route('/books', methods=['POST'])
 def add_book():
-    return jsonify(request.get_json())
+    request_data = request.get_json()
+    if(validBookObject(request_data)):
+        new_book = {
+            "name": request_data['name'],
+            "price": request_data['price'],
+            "isbn": request_data['isbn']
+        }
+        books.insert(0, new_book)
+        response = Response("", 201, mimetype='application/json')
+        response.headers['Location'] = "/books/" + str(new_book['isbn'])
+        return response
+    else:
+        invalidBookObjectErrMsg = {
+            "error": "Invalid book object  passed in request",
+            "helpString": "{'name': 'bookName','price': 100,'isbn': 9788195343410918}"
+        }
+        response = Response(json.dumps(invalidBookObjectErrMsg), status=400, mimetype='application/json')
+        return response
 
 
 # right hand side isbn is a variable
@@ -41,7 +64,5 @@ def get_book_by_isbn(isbn):
                 'price': book["price"]
             }
     return jsonify(return_value)        
-            
-
-
-app.run(port=5000)    
+app.run(port=5000)  
+        
