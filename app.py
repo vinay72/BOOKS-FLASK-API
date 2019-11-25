@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request, Response
 import json
-
 app = Flask(__name__)
 
 books = [
@@ -17,13 +16,13 @@ books = [
 ]
 
 
-# GET /books
+#GET /books
 @app.route('/books')
 def get_books():
     return jsonify({'books': books})
 
 
-# POST /books
+#POST /books
 # {
 #     'name': 'fweve',
 #     'price': 4.67,
@@ -35,12 +34,11 @@ def validBookObject(bookObject):
     else:
         return False
 
-
-# books/isbn_number
+#books/isbn_number
 @app.route('/books', methods=['POST'])
 def add_book():
     request_data = request.get_json()
-    if (validBookObject(request_data)):
+    if(validBookObject(request_data)):
         new_book = {
             "name": request_data['name'],
             "price": request_data['price'],
@@ -59,7 +57,9 @@ def add_book():
         return response
 
 
-# GET /books/987654321098
+    
+
+#GET /books/987654321098
 @app.route('/books/<int:isbn>')
 def get_book_by_isbn(isbn):
     return_value = {}
@@ -72,21 +72,20 @@ def get_book_by_isbn(isbn):
             }
     return jsonify(return_value)
 
-
-# PATCH /books/987654321098
+#PATCH /books/987654321098
 # {
 #     'name': 'Harry Potter and The Chamber of Secrets',
 # }
 # {
 #     'price': '8.99',
 # }
-@app.route('/books/<int:isbn>', methods=['PATCH'])
+@app.route('/books/<int:isbn>', methods = ['PATCH'])
 def update_book(isbn):
     request_data = request.get_json()
     updated_book = {}
-    if ("name" in request_data):
+    if("name" in request_data):
         updated_book["name"] = request_data['name']
-    if ("price" in request_data):
+    if("price" in request_data):
         updated_book["price"] = request_data['price']
     for book in books:
         if book["isbn"] == isbn:
@@ -95,6 +94,8 @@ def update_book(isbn):
     response.headers['Location'] = "/books/" + str(isbn)
     return response
 
+
+#PATCH /books/987654321098
 
 @app.route('/books/<int:isbn>', methods=["PUT"])
 def replace_book(isbn):
@@ -114,4 +115,23 @@ def replace_book(isbn):
     return response
 
 
-app.run(port=5001, debug='true')
+#DELETE /books/945673292394
+#Body { 'name': 'dfbgbgbdb'}
+@app.route('/books/<int:isbn>', methods=['DELETE'])
+def delete_book(isbn):
+    i = 0
+    for book in books:
+        if book["isbn"] == isbn:
+            books.pop(i)
+            response = Response("", status=204)
+            return response
+        i += 1
+    invalidBookObjectErrorMsg = {
+        "error": "Book with the ISBN number that was provided was not found, so therefore unable to delete"
+    }
+    response = Response(json.dumps(invalidBookObjectErrorMsg), status=404, mimetype='application/json')
+    return response
+        
+
+
+app.run(port=5001,debug='true')    
